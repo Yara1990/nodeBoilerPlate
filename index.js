@@ -1,39 +1,79 @@
 var http = require('http');
 var url = require('url');
-var stringDecoder = require('string_decoder').StringDecoder;
-var server = http.createServer(function(req,res){
+const {
+  StringDecoder
+} = require('string_decoder');
+var server = http.createServer(function(req, res) {
 
-    //get url and parse it
+  //get url and parse it
 
-    var parsedUrl = url.parse(req.url,true);
+  var parsedUrl = url.parse(req.url, true);
 
-    //get path
-    var path =parsedUrl.pathname;
-    var trimmedPath = path.replace(/^\/+|\/+$/g,'');
-    //get query string
-    var queryStringObject = parsedUrl.query;
-    var method = req.method.toLowerCase();
-    var headers = req.headers;
+  //get path
+  var path = parsedUrl.pathname;
+  var trimmedPath = path.replace(/^\/+|\/+$/g, '');
+  //get query string
+  var queryStringObject = parsedUrl.query;
+  // get method
+  var method = req.method.toLowerCase();
+  //get headers
+  var headers = req.headers;
+  // Get Payload
+  var decoder = new StringDecoder('utf8');
+  var buffer = '';
 
-    var decoder = new StringDecoder('utf-8');
-    var buffer = '';
-    req.on('data',function(data){
-      buffer+= decoder.write(data);
+  req.on('data', function(data) {
+    buffer += decoder.write(data);
+  });
+  req.on('end', function() {
+    buffer += decoder.end();
+
+    //choose the handler
+    var choosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+    //construct the data obj to send to Handler
+    var data = {
+      'trimmedPath': trimmedPath,
+      'queryStringObject': queryStringObject,
+      'method': method,
+      'headers': headers,
+      'Payload': buffer
+    };
+
+    // route the request to the handler specified in router
+    choosenHandler(data, function(statusCode, payload) {
+      //default Handler
+      statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
+      // /default payload
+
+      payload = typeof(payload) == 'object' ? payload : {};
+      var payloadString = JSON.stringify(payload);
+      res.writeHead(statusCode);
+      res.end(payloadString);
+      console.log('returning : ' + statusCode, payloadString);
+
     });
-    req.on('end',function(){
-      buffer += decoder.end();
-
-      res.end('Hello World\n');
-      console.log('path: '+ trimmedPath);
-      console.log(queryStringObject);
-
-    })
-
-
-    //send the response
+  });
 
 });
 
-server.listen(3000,function(){
+server.listen(3000, function() {
   console.log('Server is listning')
-})
+});
+
+//Define handler
+var handlers = {};
+handlers.sample = function(data, callback) {
+  //callback http status coad and a Payload
+  callback(406, {
+    'name': 'sample handler'
+  });
+};
+//notFound Handler
+handlers.notFound = function(data, callback) {
+  callback(404);
+};
+//Define a router
+
+var router = {
+  'sample': handlers.sample
+};
