@@ -1,10 +1,42 @@
 var http = require('http');
+var https = require('https');
+
 var url = require('url');
+var config = require('./config.js');
+var fs = require('fs');
+
 const {
   StringDecoder
 } = require('string_decoder');
-var server = http.createServer(function(req, res) {
 
+// Istantiate the HTTP Server
+var httpServer = http.createServer(function(req, res) {
+  unifiedServer(req, res)
+});
+
+//Start the HTTP Server
+httpServer.listen(config.httpPort, function() {
+  console.log('Server is listning to port : ' + config.httpPort + ' and ' + config.envName + ' mode')
+});
+
+// Instantiate the HTTPS Server
+var httpsServerOptions = {
+  'key': fs.readFileSync('./https/key.pem'),
+  'cert': fs.readFileSync('./https/cert.pem')
+};
+
+var httpsServer = https.createServer(httpsServerOptions, function(req, res) {
+  unifiedServer(req, res)
+});
+
+//Start the HTTPS Server
+httpsServer.listen(config.httpsPort, function() {
+  console.log('Server is listning to port : ' + config.httpsPort + ' and ' + config.envName + ' mode')
+});
+
+
+//All the server logic here
+var unifiedServer = function(req, res) {
   //get url and parse it
 
   var parsedUrl = url.parse(req.url, true);
@@ -53,20 +85,13 @@ var server = http.createServer(function(req, res) {
 
     });
   });
-
-});
-
-server.listen(3000, function() {
-  console.log('Server is listning')
-});
+};
 
 //Define handler
 var handlers = {};
-handlers.sample = function(data, callback) {
+handlers.ping = function(data, callback) {
   //callback http status coad and a Payload
-  callback(406, {
-    'name': 'sample handler'
-  });
+  callback(200);
 };
 //notFound Handler
 handlers.notFound = function(data, callback) {
@@ -75,5 +100,5 @@ handlers.notFound = function(data, callback) {
 //Define a router
 
 var router = {
-  'sample': handlers.sample
+  'ping': handlers.ping
 };
