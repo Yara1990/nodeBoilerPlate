@@ -4,6 +4,7 @@ var https = require('https');
 var url = require('url');
 var config = require('./config.js');
 var fs = require('fs');
+var handlers = require('./lib/handlers');
 
 const {
   StringDecoder
@@ -87,18 +88,9 @@ var unifiedServer = function(req, res) {
   });
 };
 
-//Define handler
-var handlers = {};
-handlers.ping = function(data, callback) {
-  //callback http status coad and a Payload
-  callback(200);
-};
-//notFound Handler
-handlers.notFound = function(data, callback) {
-  callback(404);
-};
 //Define a router
 
 var router = {
-  'ping': handlers.ping
+  'ping': handlers.ping,
+  'user': handlers.users
 };
