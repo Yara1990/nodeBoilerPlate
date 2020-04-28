@@ -2,9 +2,10 @@ var http = require('http');
 var https = require('https');
 
 var url = require('url');
-var config = require('./config.js');
+var config = require('./lib/config');
 var fs = require('fs');
 var handlers = require('./lib/handlers');
+var helpers = require('./lib/helpers');
 
 const {
   StringDecoder
@@ -69,7 +70,7 @@ var unifiedServer = function(req, res) {
       'queryStringObject': queryStringObject,
       'method': method,
       'headers': headers,
-      'Payload': buffer
+      'Payload': helpers.parseJsonToObject(buffer)
     };
 
     // route the request to the handler specified in router
