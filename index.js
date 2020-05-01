@@ -40,6 +40,9 @@ httpsServer.listen(config.httpsPort, function() {
 //All the server logic here
 var unifiedServer = function(req, res) {
   //get url and parse it
+  //Define a router
+
+
 
   var parsedUrl = url.parse(req.url, true);
 
@@ -59,10 +62,19 @@ var unifiedServer = function(req, res) {
   req.on('data', function(data) {
     buffer += decoder.write(data);
   });
+
   req.on('end', function() {
     buffer += decoder.end();
 
+    var router = {
+      'ping': handlers.ping,
+      'user': handlers.users,
+    };
+
     //choose the handler
+    console.log(trimmedPath);
+    console.log(router[trimmedPath]);
+
     var choosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
     //construct the data obj to send to Handler
     var data = {
@@ -87,11 +99,4 @@ var unifiedServer = function(req, res) {
 
     });
   });
-};
-
-//Define a router
-
-var router = {
-  'ping': handlers.ping,
-  'user': handlers.users
 };
